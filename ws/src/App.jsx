@@ -6,6 +6,10 @@ import './App.css'
 function App() {
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState('');
+  const [assistMsg, setAssistMsg] = useState("");
+  const [assistLoading, setAssistLoading] = useState(false);
+  const [assistFollowup, setAssistFollowup] = useState("");
+  const [followupTask, setFollowupTask] = useState(null);
 
   useEffect(() => {
     fetch('/api/tasks')
@@ -26,11 +30,11 @@ function App() {
     setNewTask('');
   };
 
-  const updateTask = async (id, completed) => {
+  const updateTask = async (id, completed, description) => {
     const res = await fetch(`/api/tasks/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ completed })
+      body: JSON.stringify(description !== undefined ? { completed, description } : { completed })
     });
     const updated = await res.json();
     setTasks(tasks.map(t => t.id === id ? updated : t));
@@ -39,6 +43,41 @@ function App() {
   const deleteTask = async (id) => {
     await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
     setTasks(tasks.filter(t => t.id !== id));
+  };
+
+  const assistTask = async (task) => {
+    setAssistLoading(true);
+    setAssistMsg("");
+    setAssistFollowup("");
+    setFollowupTask(task);
+    const res = await fetch('/api/assist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: task.title, description: task.description || '' })
+    });
+    const data = await res.json();
+    setAssistMsg(data.message);
+    setAssistLoading(false);
+  };
+
+  const sendFollowup = async (e) => {
+    e.preventDefault();
+    if (!assistFollowup.trim() || !followupTask) return;
+    setAssistLoading(true);
+    setAssistMsg("");
+    // Update the task with the new description/context
+    await updateTask(followupTask.id, followupTask.completed, assistFollowup);
+    // Call assist again with updated context
+    const res = await fetch('/api/assist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: followupTask.title, description: assistFollowup })
+    });
+    const data = await res.json();
+    setAssistMsg(data.message);
+    setAssistLoading(false);
+    setAssistFollowup("");
+    setFollowupTask(null);
   };
 
   return (
@@ -52,6 +91,25 @@ function App() {
         />
         <button type="submit">Add</button>
       </form>
+      {assistMsg && (
+        <div className="assist-msg">
+          {assistMsg}
+          {assistMsg.includes('provide more details') && (
+            <form onSubmit={sendFollowup} style={{marginTop:'1rem'}}>
+              <input
+                type="text"
+                value={assistFollowup}
+                onChange={e => setAssistFollowup(e.target.value)}
+                placeholder="Add more details or context"
+                style={{width:'80%'}}
+              />
+              <button type="submit" disabled={assistLoading} style={{background:'#007bff',marginLeft:'0.5rem'}}>
+                {assistLoading ? 'Sending...' : 'Send'}
+              </button>
+            </form>
+          )}
+        </div>
+      )}
       <ul>
         {tasks.map(task => (
           <li key={task.id}>
@@ -64,6 +122,9 @@ function App() {
               {task.title}
             </span>
             <button onClick={() => deleteTask(task.id)}>Delete</button>
+            <button onClick={() => assistTask(task)} disabled={assistLoading} style={{background:'#28a745'}}>
+              {assistLoading ? 'Thinking...' : 'Assist'}
+            </button>
           </li>
         ))}
       </ul>

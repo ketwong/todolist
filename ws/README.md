@@ -18,6 +18,7 @@ Open two terminals for the backend and frontend.
    ```bash
    pip install -r requirements.txt
    ```
+   (This will install flask, flask-cors, and requests for AI integration.)
 3. Run the Flask server:
    ```bash
    export FLASK_APP=backend_api.py

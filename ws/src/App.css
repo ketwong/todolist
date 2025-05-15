@@ -71,6 +71,7 @@
   color: #fff;
   border-radius: 4px;
   cursor: pointer;
+  margin-left: 0.5rem;
 }
 .app ul {
   list-style: none;
@@ -94,7 +95,21 @@
 }
 .app button {
   background: #dc3545;
+  margin-left: 0.5rem;
 }
 .app button[type="submit"] {
   background: #007bff;
+}
+.assist-msg {
+  background: #e9fbe9;
+  color: #155724;
+  border: 1px solid #b2dfb2;
+  border-radius: 4px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+.app button[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
