@@ -43,3 +43,11 @@ Open two terminals for the backend and frontend.
 ---
 
 Update this README as you add features or change the project structure.
+
+
+export FLASK_APP=backend_api.py
+source backend-venv/bin/activate
+
+pip install -r requirements.txt
+
+flask run --debug --port=5001
